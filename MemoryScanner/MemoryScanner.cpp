@@ -3,6 +3,9 @@
 
 #include "framework.h"
 #include "MemoryScanner.h"
+#include "Memory.h"
+
+#include <stdio.h>
 
 #define MAX_LOADSTRING 100
 
@@ -182,6 +185,10 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 // Build Custom Window
 HWND InitializeMainWindow(HINSTANCE hInstance){
+
+    Memory m;
+
+    m.test();
 
     // Create Main Window
     HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
