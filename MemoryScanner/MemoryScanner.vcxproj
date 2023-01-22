@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Events.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="MemoryScanner.h" />

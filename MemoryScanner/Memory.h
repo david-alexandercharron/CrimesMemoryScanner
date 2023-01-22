@@ -1,9 +1,11 @@
 #pragma once
+#include <string>
+#include <vector>
+
 class Memory
 {
-public:
-	void test();
 private:
-
+public:
+	std::vector<std::string> scan();
 };
 

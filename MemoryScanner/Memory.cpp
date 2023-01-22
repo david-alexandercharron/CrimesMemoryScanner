@@ -1,6 +1,7 @@
 #include "Memory.h"
 #include <Windows.h>
 #include <iostream>
+#include <vector>
 
 /// All the different flags that determine if a Memory Block is writable
 #define WRITABLE (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
@@ -319,9 +320,11 @@ unsigned int peek(HANDLE hProc, int data_size, unsigned int addr)
 
 /// <summary> Print Memory Scan Matches </summary>
 /// <param name="mb_list"> Pointer to the memory block list scan </param>
-void print_matches(MEMBLOCK* mb_list)
+/// <returns> Value read from process memory </returns>
+std::vector<std::string> print_matches(MEMBLOCK* mb_list)
 {
     MEMBLOCK* mb = mb_list;
+    std::vector<std::string> matches;
 
     while (mb)
     {
@@ -330,15 +333,17 @@ void print_matches(MEMBLOCK* mb_list)
             if (IS_IN_SEARCH(mb, offset))
             {
                 unsigned int val = peek(mb->hProc, mb->data_size, (long long unsigned int)mb->addr + offset);
-                printf("0x%08x: 0x%08x (%d) and %x\r\n", mb->addr + offset, val, val, offset);
 
                 char message[50];
-                sprintf_s(message, "0x%08x: 0x%08x (%d) and %x\r\n", mb->addr + offset, val, val, offset);
+                sprintf_s(message, "0x%08x: 0x%08x (%d) and %x", mb->addr + offset, val, val, offset);
+                matches.push_back(message);
                 OutputDebugStringA(message);
             }
         }
         mb = mb->next;
     }
+
+    return matches;
 }
 
 /// <summary> Get Matches Count </summary>
@@ -375,11 +380,13 @@ unsigned int str2int(char* s)
     return strtoul(s, NULL, base);
 }
 
-
-void Memory::test()
+std::vector<std::string> Memory::scan()
 {
     
-    MEMBLOCK* scan = create_scan(20552, 4);
+    // Create a scan on a certain PID, use tasklist in cmd or Task Manager to find the pid
+    MEMBLOCK* scan = create_scan(14080, 4);
+    char message[50];
+    std::vector<std::string> matches;
 
     if (scan)
     {
@@ -388,18 +395,18 @@ void Memory::test()
         MEMBLOCK* mb = scan;
         while (mb)
         {
-            update_memblock(mb, SEARCH_CONDITION::COND_EQUALS, 1);
+            update_memblock(mb, SEARCH_CONDITION::COND_EQUALS, 3000);
             //printf("Found : %d", get_matches_count(scan));
 
             int x = get_matches_count(scan);
-            char message[50];
+            
             sprintf_s(message, "\nDone scanning... The value of x is: %d\n\n", x);
+            //test = "Done scanning... The value of x is: " + std::to_string(x);
             OutputDebugStringA(message);
-
 
             mb = mb->next;
         }
-        print_matches(scan);
+        matches = print_matches(scan);
 
 
         /*printf("Searching increased\n\n");
@@ -418,5 +425,7 @@ void Memory::test()
 
         free_scan(scan);
     }
+
+    return matches;
 
 }

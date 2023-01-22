@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "MemoryScanner.h"
 #include "Memory.h"
+#include "Events.h"
 
 #include <stdio.h>
 
@@ -13,6 +14,7 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+HWND hButton;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -100,7 +102,8 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
-// Create Window
+    
+    // Create Window
    HWND hWnd = InitializeMainWindow(hInstance);
 
    if (!hWnd)
@@ -134,6 +137,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // Parse the menu selections:
             switch (wmId)
             {
+            case SCAN_BUTTON:
+                TCHAR buffer[1024];
+                GetDlgItemText(hWnd, SCAN_TEXT, buffer, sizeof(buffer));
+                OutputDebugStringW(buffer);
+                break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -182,42 +190,51 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
-
 // Build Custom Window
 HWND InitializeMainWindow(HINSTANCE hInstance){
-
-    Memory m;
-
-    m.test();
 
     // Create Main Window
     HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
     // Create Button
-    HWND hButton = CreateWindowW(
+    // Uncomment all code on top and comment this
+    hButton = CreateWindowW(
         L"BUTTON", L"Start scan!",
         WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_FLAT,
         10, 10, 100, 30,
-        hWnd, NULL, hInstance, NULL);
+        hWnd, (HMENU)SCAN_BUTTON, (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
 
+    // Create a TextBox
+    HWND hTextBox = CreateWindowW(
+        L"EDIT", L"",
+        WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT,
+        120, 10, 200, 30,
+        hWnd, (HMENU)SCAN_TEXT, hInstance, NULL);
 
     // Create Font
-    HFONT hFont = CreateFont(14, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, L"Segoe UI");
+    HFONT hFont = CreateFont(16, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, L"Segoe UI");
     SendMessage(hButton, WM_SETFONT, (WPARAM)hFont, TRUE);
+    SendMessage(hTextBox, WM_SETFONT, (WPARAM)hFont, TRUE);
 
     // Create ListBox
     HWND hListBox = CreateWindowExW(
         WS_EX_CLIENTEDGE, L"LISTBOX", L"",
         WS_CHILD | WS_VISIBLE | LBS_STANDARD,
-        10, 50, 200, 300,
+        10, 50, 500, 300,
         hWnd, (HMENU)101, hInstance, NULL);
 
-    SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM)L"Item 1");
-    SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM)L"Item 2");
-    SendMessageW(hListBox, LB_ADDSTRING, 0, (LPARAM)L"Item 3");
-
     SendMessage(hListBox, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+    // Memory testing
+    Memory m;
+    std::vector<std::string> scan = m.scan();
+
+    for (int i = 0; i < scan.size(); i++)
+    {
+        SendMessageA(hListBox, LB_ADDSTRING, 0, (LPARAM)scan[i].c_str());
+        OutputDebugStringA(scan[i].c_str());
+    }
 
     return hWnd;
 }
